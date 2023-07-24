@@ -6,7 +6,7 @@ iNGNN-DTI is a framework for the drug-target interaction prediction. The model e
 
 ## Environment
 We conduct our experiments with python3.8. Here are the requirements
-'''
+```
 descriptastorus
 matplotlib
 networkx
@@ -21,13 +21,13 @@ subword_nmt
 torch
 torch_geometric
 torchvision
-'''
+```
 
 ## Usage
 
-'''
+```
 python main.py
-'''
+```
 
 ## Acknowledgement
 DeepPurpose: https://github.com/kexinhuang12345/DeepPurpose
