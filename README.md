@@ -30,6 +30,6 @@ python main.py
 ```
 
 ## Acknowledgement
-DeepPurpose: https://github.com/kexinhuang12345/DeepPurpose
-Nested Graph Neural Network (NGNN): https://github.com/muhanzhang/NestedGNN
-Attention Free Transformer: https://github.com/rish-16/aft-pytorch
+DeepPurpose: https://github.com/kexinhuang12345/DeepPurpose  
+Nested Graph Neural Network (NGNN): https://github.com/muhanzhang/NestedGNN  
+Attention Free Transformer: https://github.com/rish-16/aft-pytorch  
