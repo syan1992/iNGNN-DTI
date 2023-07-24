@@ -1,9 +1,16 @@
+import os
+import argparse
+
+import torch
+import torch.distributed as dist
+from torch.nn.parallel import DistributedDataParallel as DDP
+from torch.utils.data.distributed import DistributedSampler
+from torch.utils.tensorboard import SummaryWriter
 from torch.autograd import Variable
 import torch.nn.functional as F
 from torch.utils import data
 from torch.utils.data import SequentialSampler
 from torch import nn 
-import torch
 from torch_geometric.nn import BatchNorm
 
 from tqdm import tqdm
@@ -20,27 +27,12 @@ np.random.seed(3)
 import copy
 from prettytable import PrettyTable
 
-import os
+from utils import *
+from encoders import *
 
-from DeepPurpose.utils import *
-from DeepPurpose.model_helper import Encoder_MultipleLayers, Embeddings        
-from DeepPurpose.encoders import *
-from DeepPurpose.functions import *
-from torch.utils.tensorboard import SummaryWriter
-
-from DeepPurpose.qanet_local_attention import *
-
-from DeepPurpose.gnn import *
-from DeepPurpose.gnn_virtual_node import * 
-from DeepPurpose.load_graph_data import DTADataset, collate
-
-from DeepPurpose.mmbt import MultimodalBertClf
-import pdb
-
-import argparse
-import torch.distributed as dist
-from torch.nn.parallel import DistributedDataParallel as DDP
-from torch.utils.data.distributed import DistributedSampler
+from gnn import *
+from gnn_virtual_node import * 
+from load_graph_data import DTADataset, collate
 
 class Classifier(nn.Sequential):
     def __init__(self, model_graph, **config):
