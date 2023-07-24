@@ -1,6 +1,6 @@
 # Prediction of Drug - Target Interaction with Interpretable Nested Graph Neural Network and Pretrained Molecule Models (iNGNN-DTI)
 ## Introduction
-![image]([https://github.com/](https://github.com/syan1992/iNGNN-DTI/blob/master/figure/archi.png))
+![image](https://github.com/syan1992/iNGNN-DTI/blob/master/figure/archi.png)
 
 ## 
 
