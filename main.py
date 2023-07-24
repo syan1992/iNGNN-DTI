@@ -1,10 +1,7 @@
 import os
 os.environ['CUDA_VISIBLE_DEVICES']="1"
 
-import numpy as np
-
 import DTI as models
-from utils import *
 from dataset import *
 
 X_drug, X_target, y = load_process_DAVIS('./data/', binary=False)

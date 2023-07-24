@@ -1,19 +1,12 @@
 import os
-import argparse
 
 import torch
-import torch.distributed as dist
 from torch.nn.parallel import DistributedDataParallel as DDP
-from torch.utils.data.distributed import DistributedSampler
 from torch.utils.tensorboard import SummaryWriter
 from torch.autograd import Variable
 import torch.nn.functional as F
-from torch.utils import data
-from torch.utils.data import SequentialSampler
 from torch import nn 
-from torch_geometric.nn import BatchNorm
 
-from tqdm import tqdm
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -28,8 +21,6 @@ import copy
 from prettytable import PrettyTable
 
 from utils import *
-from encoders import *
-
 from gnn import *
 from gnn_virtual_node import * 
 from load_graph_data import DTADataset, collate
@@ -68,9 +59,6 @@ class Classifier(nn.Sequential):
 
     def forward(self, input_x0, input_x1):
         bs = input_x0.y.shape[0]
-        #p_feature = F.normalize(input_x1.p_feature.reshape(bs,-1), dim=1)
-        #d_feature = F.normalize(input_x0.d_feature.reshape(bs,-1), dim=1)
-       
         p_feature = self.proj_p(F.dropout(input_x1.p_feature.reshape(bs,-1),0.1))
         d_feature = self.proj_d(F.dropout(input_x0.d_feature.reshape(bs,-1),0.1))
  
@@ -78,9 +66,7 @@ class Classifier(nn.Sequential):
 
 	#prediction
         v_f = torch.cat((v_D_graph, v_P_graph),1).squeeze()
-        #v_f = F.dropout(self.ln_f(v_f), p=0.1)
-        #v_f = v_D_graph + v_P_graph
-         
+	
         for i, l in enumerate(self.predictor1):
             if i==(len(self.predictor1)-1):
                 feat = v_f
@@ -92,47 +78,31 @@ class Classifier(nn.Sequential):
         return v_f, feat
 
 def model_initialize(**config):
-	model = DBTA(**config)
+	model = DTI(**config)
 	return model
 
 def model_pretrained(path_dir = None, model = None):
 	if model is not None:
 		path_dir = download_pretrained_model(model)
 	config = load_dict(path_dir)
-	model = DBTA(**config)
+	model = DTI(**config)
 	model.load_pretrained(path_dir + '/model.pt')    
 	return model
 
-class DBTA:
+class DTI:
 	'''
 		Drug Target Binding Affinity 
 	'''
 
 	def __init__(self, **config):
-		drug_encoding = config['drug_encoding']
-		target_encoding = config['target_encoding']
-
 		self.model_graph = EGNN()
 		self.model = Classifier(self.model_graph, **config)
 		self.config = config
 		self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-		
-		self.drug_encoding = drug_encoding
-		self.target_encoding = target_encoding
 		self.result_folder = config['result_folder']
 		if not os.path.exists(self.result_folder):
 			os.mkdir(self.result_folder)            
 		self.binary = False
-		if 'num_workers' not in self.config.keys():
-			self.config['num_workers'] = 0
-		if 'decay' not in self.config.keys():
-			self.config['decay'] = 0
-
-		self.head = nn.Sequential(
-                nn.Linear(512, 512),
-                nn.ReLU(inplace=True),
-                nn.Linear(512, 128)
-            ).cuda()
 
 	#prepare the protein and drug pairs
 	def test_(self, data_generator, model, repurposing_mode = False, test = False):
@@ -152,7 +122,6 @@ class DBTA:
 
 			if self.binary:
 				loss_fct = torch.nn.BCELoss()
-				#loss_fct = BCEFocalLoss()
 				m = torch.nn.Sigmoid()
 				if score.shape[0]>1:
 					n = torch.squeeze(m(score), 1)
@@ -165,6 +134,7 @@ class DBTA:
 			y_label = y_label + label_ids.flatten().tolist()
 			y_pred = y_pred + logits.flatten().tolist()
 			outputs = np.asarray([1 if i else 0 for i in (np.asarray(y_pred) >= 0.5)])
+
 		model.train()
 		if self.binary:
 			if repurposing_mode:
@@ -183,7 +153,6 @@ class DBTA:
 			f1 = 2 * precision * tpr / (tpr + precision + 0.00001)
 			#thred_optim = thresholds[5:][np.argmax(f1[5:])]
 
-			#print("optimal threshold: " + str(thred_optim))
 			y_pred_s = [1 if i else 0 for i in (np.array(y_pred) >= 0.5)]
 			#AUROC
 			auc_k = auc(fpr, tpr)
@@ -203,7 +172,7 @@ class DBTA:
 			sensitivity1 = tp/(tp+fn)
 			specificity1 = tn/(tn+fp)
 
-			return auc_k,auprc,sensitivity1,specificity1, accuracy1, f1_score(y_label, outputs),log_loss(y_label,y_pred),y_pred, y_label
+			return auc_k, auprc, sensitivity1, specificity1, accuracy1, f1_score(y_label, outputs), log_loss(y_label,y_pred), y_pred, y_label
 		
 	def train(self, train, val, test, verbose = True,datanum=0,setnum=0):
 		#if len(train.Label.unique()) == 2:
@@ -370,15 +339,6 @@ class DBTA:
 		self.model = model_max
 		print('model epoch:'+str(ii))
 
-		#train_set = None
-		#train_loader = None
-		#val_set = None
-		#valid_loader = None
-
-		#test_set = DTADataset(dataFrame=test, setnum=setnum, phase='test')
-		#test_loader = torch.utils.data.DataLoader(test_set, batch_size=BATCH_SIZE, shuffle=False, collate_fn=collate)
-		
-
 		with torch.set_grad_enabled(False):
 			if verbose:
 				print('--- Go for Testing ---')
@@ -450,8 +410,8 @@ class DBTA:
 		torch.save(model_max.state_dict(), model_file) 
 
 	def predict(self, df_data):
-                print('predict') 
-                
+		print('predict') 
+		
 	def save_model(self, path_dir):
 		if not os.path.exists(path_dir):
 			os.makedirs(path_dir)

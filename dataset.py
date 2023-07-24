@@ -1,10 +1,11 @@
+import os
 import pandas as pd
 import numpy as np
 import wget
 from zipfile import ZipFile
-from DeepPurpose.utils import *
 import json
-import os
+
+from utils import *
 
 '''
 Acknowledgement:

@@ -1,10 +1,8 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torch_geometric.nn import GCNConv, GATConv, GINConv, BatchNorm, global_max_pool as gmp, global_add_pool as gap,global_mean_pool as gep,global_sort_pool
-from torch_geometric.utils import dropout_adj
+from torch_geometric.nn import GATConv, GINConv, BatchNorm, global_max_pool as gmp, global_add_pool as gap,global_mean_pool as gep, global_sort_pool
 
-import pdb
 # GCN based model
 class GNNNet(torch.nn.Module):
     def __init__(self, n_output=1, num_features_pro=32, num_features_mol=32, output_dim=128, dropout=0.2):
